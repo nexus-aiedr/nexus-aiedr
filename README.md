@@ -53,50 +53,37 @@ NEXUS is a next-generation **EDR/XDR platform** written in Rust that combines tw
 
 ## 🏗️ Architecture
 
-```text
-+-------------------------------------------------------------+
-|                    NEXUS Agent (per-host)                   |
-|                                                             |
-|   ProcessMonitor (sysinfo polling, eBPF in M10)             |
-|        |                                                    |
-|        v                                                    |
-|   CorrelationEngine (per-host sliding windows)              |
-|        |                                                    |
-|        v                                                    |
-|   +======================================+                  |
-|   |          CascadingOracle             |                  |
-|   |                                      |                  |
-|   |   +------------------------------+   |                  |
-|   |   | HeuristicOracle              |   |   KnowledgeBase  |
-|   |   | deterministic, 100 rules     |<--+-- (signed feeds, |
-|   |   | tier-aware filtering         |   |    tier-aware)   |
-|   |   | ~1 ms verdict latency        |   |                  |
-|   |   +-------------+----------------+   |                  |
-|   |                 |                    |                  |
-|   |                 | if score in        |                  |
-|   |                 | [0.3, 0.7]         |                  |
-|   |                 v                    |                  |
-|   |   +------------------------------+   |                  |
-|   |   | LocalOracle / Gemma 4 E4B    |   |   llama.cpp HTTP |
-|   |   | zero-day + enrichment        |<--+-- :8080          |
-|   |   | ~7-15 s verdict latency      |   |                  |
-|   |   +------------------------------+   |                  |
-|   +======================================+                  |
-|        |                                                    |
-|        v                                                    |
-|   ResponseEngine (5-level adaptive ladder)                  |
-|        |                                                    |
-|        v                                                    |
-|   Audit log (structured, ECS-compliant tracing)             |
-+-------------------------------------------------------------+
-                            |
-                            | (future)
-                            v
-                  +--------------------+
-                  |   nexus-hive P2P   |
-                  |  Ed25519-signed    |
-                  |  IoC propagation   |
-                  +--------------------+
+```mermaid
+flowchart TD
+    PM[ProcessMonitor<br/>sysinfo polling, eBPF in M10]
+    CE[CorrelationEngine<br/>per-host sliding windows]
+    
+    subgraph CO["🧠 Cascading Oracle"]
+        HO[HeuristicOracle<br/>deterministic, 100 rules<br/>tier-aware filtering<br/>~1 ms verdict latency]
+        LO[LocalOracle / Gemma 4 E4B<br/>zero-day + enrichment<br/>~7-15 s verdict latency]
+        HO -->|score in 0.3-0.7| LO
+    end
+    
+    KB[(KnowledgeBase<br/>signed feeds<br/>tier-aware)]
+    LLM[llama.cpp HTTP<br/>:8080]
+    RE[ResponseEngine<br/>5-level adaptive ladder]
+    AL[Audit Log<br/>structured ECS-compliant]
+    HIVE[nexus-hive P2P<br/>Ed25519-signed<br/>IoC propagation]
+    
+    PM --> CE
+    CE --> CO
+    KB -.->|loads at boot| HO
+    LLM -.->|HTTP API| LO
+    CO --> RE
+    RE --> AL
+    AL -.->|future| HIVE
+    
+    style CO fill:#1e3a5f,stroke:#4a90e2,stroke-width:3px,color:#fff
+    style HO fill:#2a5298,stroke:#4a90e2,color:#fff
+    style LO fill:#5e2a82,stroke:#9b59b6,color:#fff
+    style KB fill:#1a3a1a,stroke:#27ae60,color:#fff
+    style LLM fill:#3a1a1a,stroke:#e74c3c,color:#fff
+    style HIVE fill:#3a3a1a,stroke:#f39c12,color:#fff
 ```
 
 ---
