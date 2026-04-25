@@ -283,14 +283,6 @@ A transparent log of development progress.
 
 ---
 
-## 🤝 Contributing
-
-NEXUS is currently developed in a private repository during pre-release. Contributions, security reports, and threat intelligence submissions will be accepted once the project goes public.
-
-If you have **immediate feedback** or **threat intelligence** to share, please reach out via the contact information below.
-
----
-
 ## 📬 Contact
 
 For early-access evaluation, threat intelligence collaboration, or commercial licensing inquiries:
