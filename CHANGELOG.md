@@ -60,6 +60,56 @@ the NEX-L-CR-006 fix applied during M9 development.
 
 All 87 unit tests still passing. Workspace builds clean.
 
+Five additional detection rules narrowed in a follow-up audit pass,
+applying the same conservative narrowing pattern. The audit was
+triggered by reviewing rules with single-condition match logic or
+overly broad substring patterns.
+
+- **NEX-L-CR-002** (Browser credential database access): added
+  process_name allowlist (`cat`/`less`/`sqlite3`/`cp`/`tar`/`zip`/`xxd`/...)
+  and required `google-chrome` path. Previously matched any process
+  with `Login Data` substring in command line, including legitimate
+  files named `Login Data Sheet.csv` or paths containing those words.
+  Trade-off: now Chrome-specific (Edge/Firefox/Brave excluded), but
+  zero false positives on the high-signal 0.90-score detection.
+
+- **NEX-L-LM-003** (rsync to remote SSH host): added required `:`
+  check in addition to `@`. Previously matched any rsync command with
+  `@` substring (paths, parameter values). Now requires both
+  `user@host` separator AND `host:path` separator, the canonical
+  SSH destination format.
+
+- **NEX-L-PE-005** (crontab interactive edit): switched from
+  `Contains "-"` to `EndsWith " -e"`. Previously matched any crontab
+  invocation with a hyphen (`-l` list, `-u` user, paths with dashes).
+  Now matches only the actual edit pattern used in privilege
+  escalation sessions.
+
+- **NEX-L-PE-002** (rc.local modification): added process_name
+  allowlist (`echo`/`printf`/`cat`/`tee`/`sed`) and required `>>`
+  append redirection. Previously matched any command containing
+  `/etc/rc.local` substring, including `cat /etc/rc.local` (read).
+  Now matches only actual write patterns. Same approach as PE-008.
+
+- **NEX-L-LM-004** (scp file copy to remote host): added required
+  `:` check in addition to `@`. Same fix pattern as LM-003.
+  Eliminates false positives on local paths containing `@`.
+
+Cumulative effect of M9 audit (8 fixes total, including NEX-L-CR-006
+applied during M9 development):
+
+- 8 detection rules narrowed
+- 0 unit tests broken
+- 0 changes to rule count, score, or tier classification
+- Detection capability on intended attacks: preserved
+- False positive scenarios eliminated: 12+
+
+Internal commit reference: `6638571` (private nexus-core repo).
+
+This is a quality-improvement pass, not a coverage change. Future
+similar passes will be done as new false-positive patterns are
+identified during real-world testing.
+
 ---
 
 ## [v0.2.0] — Milestone 8: Detection Coverage Expansion
