@@ -34,6 +34,32 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com).
 - All 96 tests passing (87 unit + 9 integration)
 - Cascading Oracle live demo: heuristic + AI enrichment validated
 
+### Fixed (post-release)
+
+Three detection rules narrowed to prevent false positives identified
+during post-Milestone 9 review. Same conservative narrowing pattern as
+the NEX-L-CR-006 fix applied during M9 development.
+
+- **NEX-L-PE-008** (User shell rc/profile modification): tightened to
+  require `>>` append redirection in addition to `.bashrc` substring.
+  Previously matched any `cat/echo/printf/tee` command touching `.bashrc`,
+  including legitimate reads like `cat ~/.bashrc`. Now correctly
+  distinguishes malicious shell rc injection from harmless inspection.
+
+- **NEX-L-CR-001** (/etc/shadow read access): switched from `Contains`
+  to `EndsWith` match on `/etc/shadow`. Previously triggered false
+  positives on `/etc/shadow.bak`, `/etc/shadow.backup`, and any other
+  path containing the substring. Now matches only the exact path.
+
+- **NEX-L-LM-002** (SSH agent forwarding abuse): tightened to require
+  the `-A` flag in isolation (` -A ` with surrounding spaces).
+  Previously matched any `ssh` command line containing the substring
+  `-A`, including multi-flag combinations like `-ABCDE` or paths
+  containing uppercase A. Now matches only the isolated flag as
+  intended.
+
+All 87 unit tests still passing. Workspace builds clean.
+
 ---
 
 ## [v0.2.0] — Milestone 8: Detection Coverage Expansion
