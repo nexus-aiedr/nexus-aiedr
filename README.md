@@ -7,8 +7,8 @@
 [![Status](https://img.shields.io/badge/status-pre--release-orange)]()
 [![Rust](https://img.shields.io/badge/rust-1.95+-93450a)]()
 [![License](https://img.shields.io/badge/license-Proprietary-red)]()
-[![Detection Rules](https://img.shields.io/badge/detection_rules-78-blue)]()
-[![Tests](https://img.shields.io/badge/tests-98_passing-green)]()
+[![Detection Rules](https://img.shields.io/badge/detection_rules-100-blue)]()
+[![Tests](https://img.shields.io/badge/tests-87_passing-green)]()
 [![MITRE Coverage](https://img.shields.io/badge/MITRE_ATT%26CK-50%2B_techniques-purple)]()
 
 *Heuristic precision meets local LLM reasoning — zero cloud dependencies, full data sovereignty.*
@@ -21,7 +21,7 @@
 
 NEXUS is a next-generation **EDR/XDR platform** written in Rust that combines two detection engines in a unique cascading architecture:
 
-1. **Deterministic heuristic rules** — sub-millisecond detection of known attack patterns (78 curated rules across 8 detection families, 50+ MITRE ATT&CK techniques)
+1. **Deterministic heuristic rules** — sub-millisecond detection of known attack patterns (100 curated rules across 8 detection families, 50+ MITRE ATT&CK techniques)
 2. **Local AI reasoning** — Gemma 4 LLM running entirely on-premise for zero-day detection, false-positive triage, and contextual threat naming
 
 **No cloud. No telemetry leaks. No vendor lock-in.** Designed for environments where data sovereignty is non-negotiable: financial institutions, defense, healthcare, critical infrastructure, and regulated EU markets (GDPR, NIS2, eIDAS).
@@ -214,28 +214,32 @@ A transparent log of development progress.
 - 50+ unique MITRE ATT&CK techniques covered
 - Real-world threat intel references for every rule (CVEs, APT campaigns, security vendor reports)
 - LocalOracle bug fix: empty-reasoning fallback for benign events
-- Test suite expanded to **98 passing tests** (89 unit + 9 integration)
+- Test suite expanded to **96 passing tests** (87 unit + 9 integration)
 
-### 🚧 Milestone 9 — P2P Hive Mesh *(in progress)*
-- mDNS peer discovery on local network
-- Ed25519-signed beacon broadcast for IoC propagation
-- Quorum-based KB updates without central server
-- Will become the unique commercial differentiator vs Wazuh / Falco
+### ✅ Milestone 9 — Detection Coverage Hardening
+- 100 detection rules total (Linux + Windows families)
+- 4-tier capability system (Free / Pro / Business / Enterprise)
+- 8 false-positive fixes from real-world audit
+- 87 unit tests + 9 integration tests
 
-### 🔜 Milestone 10 — eBPF Kernel Telemetry *(planned)*
-- Replace polling-based `sysinfo` with eBPF (`aya` crate)
-- Sub-100 ms detection latency
-- Syscall-level visibility (`execve`, `connect`, `openat`, `clone`)
+### ✅ Milestone 10 — eBPF Kernel Telemetry
+- BPF tracepoint on `sched/sched_process_exec` (kernel 5.7+)
+- Process events captured with sub-millisecond latency
+- `aya` 0.13 toolchain (Rust nightly + bpf-linker)
+- Runtime detection: BPF when available, sysinfo polling as universal fallback
+- Verified live end-to-end: 30 events kernel → BpfProcessMonitor → CorrelationEngine → CascadingOracle, zero events dropped
 
-### 🔜 Milestone 11 — Windows-Native Agent *(planned)*
-- ETW event consumer
-- Windows service installer (MSI)
-- Native PowerShell / WMI / DCOM detection rules
+### 🚧 Milestone 11 — BPF LSM Enforcement *(next)*
+- Move from telemetry-only to active blocking via BPF LSM hooks (kernel 5.7+)
+- Configurable enforcement modes: monitor, alert, block
+- Per-rule enforcement decisions tied to severity tier
+- Build on M10's BPF foundation
 
-### 🔜 Milestone 12 — Management UI *(planned)*
-- Web-based dashboard (Leptos / Yew)
-- KB editor with rule-as-code workflow
-- Forensic timeline viewer
+### 🔜 Milestone 12 — Threat Model & Self-Protection *(planned)*
+- Formal `THREAT_MODEL.md` documenting attack vectors and mitigations
+- Watchdog: systemd `Restart=always`, KB SHA256 verification at boot
+- Process integrity self-check
+- Kernel-level protection groundwork
 
 ---
 
