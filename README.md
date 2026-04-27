@@ -8,7 +8,7 @@
 [![Rust](https://img.shields.io/badge/rust-1.95+-93450a)]()
 [![License](https://img.shields.io/badge/license-Proprietary-red)]()
 [![Detection Rules](https://img.shields.io/badge/detection_rules-100-blue)]()
-[![Tests](https://img.shields.io/badge/tests-87_passing-green)]()
+[![Tests](https://img.shields.io/badge/tests-100_passing-green)]()
 [![MITRE Coverage](https://img.shields.io/badge/MITRE_ATT%26CK-50%2B_techniques-purple)]()
 
 *Heuristic precision meets local LLM reasoning — zero cloud dependencies, full data sovereignty.*
@@ -55,7 +55,7 @@ NEXUS is a next-generation **EDR/XDR platform** written in Rust that combines tw
 
 ```mermaid
 flowchart TD
-    PM[ProcessMonitor<br/>sysinfo polling, eBPF in M10]
+    PM[ProcessMonitor<br/>eBPF kernel telemetry<br/>+ sysinfo fallback]
     CE[CorrelationEngine<br/>per-host sliding windows]
     
     subgraph CO["🧠 Cascading Oracle"]
@@ -99,7 +99,7 @@ and roadmap — for transparency with the security community while the project m
 ### What you can see today
 
 - ✅ Full architecture and design rationale
-- ✅ Complete list of 78 detection rules with MITRE mappings
+- ✅ Complete list of 100 detection rules with MITRE mappings
 - ✅ Threat intelligence references (CVEs, APT campaigns)
 - ✅ Roadmap and milestone history
 - ✅ Tech stack and performance metrics
@@ -118,7 +118,7 @@ If you represent a security team, research lab, or organization with a use case 
 
 ## 🎯 Detection Coverage
 
-NEXUS ships with **78 curated detection rules** spanning the most common Linux attack patterns observed in 2024–2026 incident response reports. Every rule includes:
+NEXUS ships with **100 curated detection rules** spanning the most common Linux attack patterns observed in 2024–2026 incident response reports. Every rule includes:
 
 - ✅ A unique `NEX-*` identifier for tracking and tuning
 - ✅ A MITRE ATT&CK technique mapping (50+ unique techniques covered)
@@ -135,7 +135,7 @@ NEXUS ships with **78 curated detection rules** spanning the most common Linux a
 | **Privilege Escalation & Defense Evasion** | 10 | TA0004 / TA0005 | SUID/SGID, sudoers, kernel exploits (PwnKit, DirtyPipe, OverlayFS), capability abuse, log tampering, MAC disable |
 | **Credential Access & Discovery** | 10 | TA0006 / TA0007 | `/etc/shadow`, browser cred DBs, SSH keys, AWS/GCP/Azure creds, kubeconfig, `/proc` memory dump, post-exploit toolkits |
 | **Lateral Movement, C2 & Exfiltration** | 13 | TA0008 / TA0011 / TA0010 | SSH brute-force, agent forwarding, DNS tunneling, Tor, ngrok/cloudflared, socat, rclone, crypto wallets, Discord/Slack webhook exfil |
-| **Total** | **78** | | |
+| **Total** | **100** | | |
 
 ### Threat Intelligence References
 
@@ -155,7 +155,7 @@ Rules are not invented — every detection is backed by published research, CVEs
 | Open / source-available | ✅ | ✅ | ❌ | ✅ |
 | Local AI reasoning | ❌ | ❌ | Cloud only | ✅ |
 | Air-gapped operation | ⚠️ | ✅ | ❌ | ✅ |
-| Deterministic rules | ✅ (2000+ OSSEC) | ✅ (~50) | ✅ | ✅ (78 curated) |
+| Deterministic rules | ✅ (2000+ OSSEC) | ✅ (~50) | ✅ | ✅ (100 curated) |
 | Per-rule MITRE mapping | Partial | Partial | ✅ | ✅ |
 | Cascading verdict (heuristic + AI) | ❌ | ❌ | ❌ | ✅ |
 | P2P mesh telemetry | ❌ | ❌ | ❌ | 🚧 (planned) |
@@ -231,12 +231,27 @@ A transparent log of development progress.
   - PPID resolved kernel-side via CO-RE access to `task_struct`
   - Executable path resolved userspace-side via `/proc/<pid>/exe` (kernel-side path resolution moves to M11 BPF LSM where it is allowed)
 - Runtime detection: BPF when available, sysinfo polling as universal fallback
+<<<<<<< HEAD
 - Verified live end-to-end: events flow kernel → BpfProcessMonitor → CorrelationEngine → CascadingOracle, zero events dropped
 ### 🚧 Milestone 11 — BPF LSM Enforcement *(next)*
 - Move from telemetry-only to active blocking via BPF LSM hooks (kernel 5.7+)
 - Configurable enforcement modes: monitor, alert, block
 - Per-rule enforcement decisions tied to severity tier
 - Build on M10's BPF foundation
+=======
+- Verified live end-to-end: events flow kernel → user-space pipeline with zero drops
+
+### 🚧 Milestone 11 — BPF LSM Enforcement *(in progress)*
+Active execve gating via BPF LSM hooks (`bprm_check_security`).
+Foundation work complete; integration with the agent runtime in progress.
+
+- ✅ LSM hook scaffold + event channel
+- ✅ Kernel-side executable path resolution
+- ✅ Allowlist / denylist policy maps with sub-microsecond lookup
+- 🚧 Agent runtime integration
+- 🔜 Alert mode (decisions surfaced, not enforced)
+- 🔜 Block mode with safety guards for critical system paths
+>>>>>>> d44dc31 (docs(readme): update status to M11 in progress, refresh metrics)
 
 ### 🔜 Milestone 12 — Threat Model & Self-Protection *(planned)*
 - Formal `THREAT_MODEL.md` documenting attack vectors and mitigations
@@ -254,8 +269,8 @@ A transparent log of development progress.
 | Async runtime | Tokio | De-facto standard for async Rust |
 | LLM | **Gemma 4 E4B Q8_0** (4B params) | Best tradeoff between local-runnable size and reasoning quality |
 | LLM serving | `llama.cpp` HTTP server | Mature, CPU-friendly, OpenAI-compatible API |
-| Process telemetry | `sysinfo` (cross-platform) | Pure Rust, no kernel dependencies — eBPF planned for future release |
-| Crypto | `ring` (AES-256-GCM, Ed25519) | Audited, BoringSSL-backed |
+| Process telemetry | `aya` eBPF (kernel 5.7+) + `sysinfo` fallback | Sub-millisecond capture via BPF, universal fallback when BPF unavailable |
+| Crypto | `ring` (Ed25519 signatures, SHA-256) | Audited, BoringSSL-backed. Integrity-first design. |
 | Schema | Elastic Common Schema 8.11 | Industry-standard interoperability |
 | Logging | `tracing` (structured) | Production-grade observability |
 | Serialization | `serde` + `serde_json` | Standard Rust ecosystem |
@@ -264,14 +279,14 @@ A transparent log of development progress.
 
 ## 📋 Current Status
 
-🚧 **Pre-release v0.2 — Milestone 8 complete**
+🚧 **Pre-release v0.3 — Milestone 11 in progress**
 
 | Metric | Value |
 |--------|-------|
-| Detection rules | **78** |
+| Detection rules | **100** |
 | MITRE techniques covered | **50+** |
-| Test coverage | **98 tests passing** (89 unit + 9 integration) |
-| Codebase size | ~7,400 lines of Rust |
+| Test coverage | **100 tests passing** (91 unit + 9 integration) |
+| Codebase size | ~10,140 lines of Rust |
 | Supported OS | Linux (Ubuntu 22.04+, WSL2 verified). Windows planned future release |
 | Detection latency (heuristic) | < 1 ms |
 | Detection latency (LocalOracle, CPU) | 7–15 s on Ryzen 9 3900XT |
