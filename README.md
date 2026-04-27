@@ -223,12 +223,15 @@ A transparent log of development progress.
 - 87 unit tests + 9 integration tests
 
 ### ✅ Milestone 10 — eBPF Kernel Telemetry
+
 - BPF tracepoint on `sched/sched_process_exec` (kernel 5.7+)
 - Process events captured with sub-millisecond latency
 - `aya` 0.13 toolchain (Rust nightly + bpf-linker)
+- **Full ProcessInfo capture (Phase 4.5):** PID, PPID, comm, executable path, timestamp
+  - PPID resolved kernel-side via CO-RE access to `task_struct`
+  - Executable path resolved userspace-side via `/proc/<pid>/exe` (kernel-side path resolution moves to M11 BPF LSM where it is allowed)
 - Runtime detection: BPF when available, sysinfo polling as universal fallback
-- Verified live end-to-end: 30 events kernel → BpfProcessMonitor → CorrelationEngine → CascadingOracle, zero events dropped
-
+- Verified live end-to-end: events flow kernel → BpfProcessMonitor → CorrelationEngine → CascadingOracle, zero events dropped
 ### 🚧 Milestone 11 — BPF LSM Enforcement *(next)*
 - Move from telemetry-only to active blocking via BPF LSM hooks (kernel 5.7+)
 - Configurable enforcement modes: monitor, alert, block
