@@ -231,27 +231,21 @@ A transparent log of development progress.
   - PPID resolved kernel-side via CO-RE access to `task_struct`
   - Executable path resolved userspace-side via `/proc/<pid>/exe` (kernel-side path resolution moves to M11 BPF LSM where it is allowed)
 - Runtime detection: BPF when available, sysinfo polling as universal fallback
-<<<<<<< HEAD
 - Verified live end-to-end: events flow kernel → BpfProcessMonitor → CorrelationEngine → CascadingOracle, zero events dropped
-### 🚧 Milestone 11 — BPF LSM Enforcement *(next)*
-- Move from telemetry-only to active blocking via BPF LSM hooks (kernel 5.7+)
-- Configurable enforcement modes: monitor, alert, block
-- Per-rule enforcement decisions tied to severity tier
-- Build on M10's BPF foundation
-=======
-- Verified live end-to-end: events flow kernel → user-space pipeline with zero drops
 
-### 🚧 Milestone 11 — BPF LSM Enforcement *(in progress)*
-Active execve gating via BPF LSM hooks (`bprm_check_security`).
-Foundation work complete; integration with the agent runtime in progress.
+### 🟢 Milestone 11 — BPF LSM Enforcement *(5/6 sub-phases done, 83%)*
 
-- ✅ LSM hook scaffold + event channel
-- ✅ Kernel-side executable path resolution
-- ✅ Allowlist / denylist policy maps with sub-microsecond lookup
-- 🚧 Agent runtime integration
-- 🔜 Alert mode (decisions surfaced, not enforced)
-- 🔜 Block mode with safety guards for critical system paths
->>>>>>> d44dc31 (docs(readme): update status to M11 in progress, refresh metrics)
+Active execve gating via BPF LSM hooks (`bprm_check_security`, kernel 5.7+).
+The full ALERT mode pipeline is wired and production-tested; BLOCK mode is
+deferred to a VM-only sub-phase due to the safety surface of kernel-level
+exec refusal.
+
+- ✅ **M11.1** — LSM hook scaffold + ring-buffered event channel
+- ✅ **M11.2** — Kernel-side executable path resolution via `bpf_d_path`
+- ✅ **M11.3** — Allowlist / denylist BPF policy maps, sub-microsecond lookup
+- ✅ **M11.4** — Agent runtime integration: M10 tracepoint + M11 LSM events share a unified `EcsEvent` channel, correlated by PID
+- ✅ **M11.5** — ALERT mode end-to-end: structured `enforcement` field on every event, `CascadingOracle` fast-path that skips both heuristic and AI evaluation on `Allowlisted` (suppress) and `Denied` (high-confidence policy violation verdict). Saves ~10s per denylist hit by avoiding the AI call. Stress tested at ~143 events/sec sustained, zero event loss.
+- 🔒 **M11.6** — BLOCK mode + safety guards (refuse-to-block list, emergency-disable file, recovery procedure). Deferred to a VM-only session because a bug in BLOCK mode can render a host unbootable.
 
 ### 🔜 Milestone 12 — Threat Model & Self-Protection *(planned)*
 - Formal `THREAT_MODEL.md` documenting attack vectors and mitigations
@@ -279,7 +273,7 @@ Foundation work complete; integration with the agent runtime in progress.
 
 ## 📋 Current Status
 
-🚧 **Pre-release v0.3 — Milestone 11 in progress**
+🟢 **Pre-release v0.3 — Milestone 11 almost complete (5/6 sub-phases done)**
 
 | Metric | Value |
 |--------|-------|
