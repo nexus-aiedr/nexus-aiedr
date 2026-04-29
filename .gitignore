@@ -5,5 +5,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+# Backup files (use git stash/tag instead of manual safety dumps)
 *.bak
 *.before-*
+*.tmp
