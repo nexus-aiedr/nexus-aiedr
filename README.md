@@ -1,14 +1,14 @@
 <div align="center">
 
-# 🛡️ NEXUS AIEDR
+# 🛡️ NorthNarrow
 
 **AI-powered Endpoint Detection & Response, engineered for air-gapped environments.**
 
-[![Status](https://img.shields.io/badge/status-pre--release-orange)]()
+[![Status](https://img.shields.io/badge/status-alpha%20%2F%20pre--customer-orange)]()
 [![Rust](https://img.shields.io/badge/rust-1.95+-93450a)]()
 [![License](https://img.shields.io/badge/license-Proprietary-red)]()
 [![Detection Rules](https://img.shields.io/badge/detection_rules-100-blue)]()
-[![Tests](https://img.shields.io/badge/tests-100_passing-green)]()
+[![Tests](https://img.shields.io/badge/tests-163_passing-green)]()
 [![MITRE Coverage](https://img.shields.io/badge/MITRE_ATT%26CK-50%2B_techniques-purple)]()
 
 *Heuristic precision meets local LLM reasoning — zero cloud dependencies, full data sovereignty.*
@@ -17,9 +17,9 @@
 
 ---
 
-## 🎯 What is NEXUS?
+## 🎯 What is NorthNarrow?
 
-NEXUS is a next-generation **EDR/XDR platform** written in Rust that combines two detection engines in a unique cascading architecture:
+NorthNarrow is a next-generation **EDR/XDR platform** written in Rust that combines two detection engines in a unique cascading architecture:
 
 1. **Deterministic heuristic rules** — sub-millisecond detection of known attack patterns (100 curated rules across 8 detection families, 50+ MITRE ATT&CK techniques)
 2. **Local AI reasoning** — Gemma 4 LLM running entirely on-premise for zero-day detection, false-positive triage, and contextual threat naming
@@ -28,9 +28,9 @@ NEXUS is a next-generation **EDR/XDR platform** written in Rust that combines tw
 
 ---
 
-## 🚀 Why NEXUS?
+## 🚀 Why NorthNarrow?
 
-| Problem | Traditional EDR | NEXUS |
+| Problem | Traditional EDR | NorthNarrow |
 |---------|-----------------|-------|
 | Zero-day detection | Cloud ML — telemetry leaves the perimeter | Local LLM — bytes never leave the perimeter |
 | False-positive fatigue | Threshold tuning hell | AI-enriched verdicts with reasoning |
@@ -46,8 +46,8 @@ NEXUS is a next-generation **EDR/XDR platform** written in Rust that combines tw
 - 🔒 **100% Local Inference** — Gemma 4 E4B Q8 runs via embedded `llama.cpp` HTTP server. No outbound API calls. Verifiable with `tcpdump`.
 - 🎯 **Adaptive Response Ladder** — 5-level severity (`LOG → ALERT → THROTTLE → KILL → ISOLATE`), proportional to confidence × score.
 - 🔗 **Per-host Correlation Engine** — Sliding windows with bounded memory, lock-free concurrent absorption, idle-host eviction.
-- 🛡️ **Graceful Degradation** — If the AI server is unreachable, NEXUS falls back to heuristic-only mode without service interruption.
-- 📡 **Future-ready P2P mesh** — `nexus-hive` will let peer agents share IoCs over Ed25519-signed beacons (no central management server required).
+- 🛡️ **Graceful Degradation** — If the AI server is unreachable, NorthNarrow falls back to heuristic-only mode without service interruption.
+- 🧬 **eBPF-first telemetry** — process exec (tracepoint + LSM), file integrity (LSM file hooks), and network outbound (kprobe + DNS) all captured kernel-side. Sub-millisecond latency, no polling overhead.
 
 ---
 
@@ -55,46 +55,82 @@ NEXUS is a next-generation **EDR/XDR platform** written in Rust that combines tw
 
 ```mermaid
 flowchart TD
-    PM[ProcessMonitor<br/>eBPF kernel telemetry<br/>+ sysinfo fallback]
+    PM[BpfProcessMonitor<br/>tracepoint sched_process_exec]
+    LSM[BpfLsmSource<br/>exec + FIM file hooks]
+    NET[NetTelemetrySource<br/>tcp_v4_connect + DNS kprobes]
     CE[CorrelationEngine<br/>per-host sliding windows]
-    
+
     subgraph CO["🧠 Cascading Oracle"]
         HO[HeuristicOracle<br/>deterministic, 100 rules<br/>tier-aware filtering<br/>~1 ms verdict latency]
         LO[LocalOracle / Gemma 4 E4B<br/>zero-day + enrichment<br/>~7-15 s verdict latency]
         HO -->|score in 0.3-0.7| LO
     end
-    
+
     KB[(KnowledgeBase<br/>signed feeds<br/>tier-aware)]
     LLM[llama.cpp HTTP<br/>:8080]
     RE[ResponseEngine<br/>5-level adaptive ladder]
     AL[Audit Log<br/>structured ECS-compliant]
-    HIVE[nexus-hive P2P<br/>Ed25519-signed<br/>IoC propagation]
-    
+
     PM --> CE
+    LSM --> CE
+    NET --> CE
     CE --> CO
     KB -.->|loads at boot| HO
     LLM -.->|HTTP API| LO
     CO --> RE
     RE --> AL
-    AL -.->|future| HIVE
-    
+
     style CO fill:#1e3a5f,stroke:#4a90e2,stroke-width:3px,color:#fff
     style HO fill:#2a5298,stroke:#4a90e2,color:#fff
     style LO fill:#5e2a82,stroke:#9b59b6,color:#fff
     style KB fill:#1a3a1a,stroke:#27ae60,color:#fff
     style LLM fill:#3a1a1a,stroke:#e74c3c,color:#fff
-    style HIVE fill:#3a3a1a,stroke:#f39c12,color:#fff
 ```
+
+---
+
+## 🔭 Vision: 2-AI Architecture
+
+NorthNarrow's roadmap centers on a **two-stream retrieval-augmented inference layer** that
+moves the AI verdict from a stateless single-call pattern to a context-aware
+dual-corpus reasoner:
+
+- **RAG-LEGIT** — a curated corpus of *benign* process / file / network behavior baselines.
+  When the LocalOracle evaluates an event, it retrieves nearest-baseline embeddings to
+  judge how *unusual* the observation is relative to known-good activity on the host.
+- **RAG-NOLEGIT** — a curated corpus of *malicious* tradecraft (CVE PoCs, APT TTPs,
+  open-source malware), used as a positive-match retrieval channel orthogonal to the
+  heuristic rules.
+
+The verdict that flows back to the cascading oracle is a 2D score (anomaly vs. known-bad)
+rather than a single confidence number, which makes the response engine's threshold
+tuning explainable in terms of *which* corpus the event matched against.
+
+The roadmap covering this layer is tracked as `M-AI-*` milestones (RAG infrastructure,
+embedding store integration, retrieval prompt design, dual-stream fusion).
+
+### Long-term: adversarial multi-agent training
+
+The end-state vision is a **multi-agent training loop** — at least five specialized
+agents (red-team simulators that generate novel attack chains, blue-team verifiers
+that label heuristic+RAG verdicts, a referee that scores agreement, a curator that
+promotes new rules into the signed KB feed, an adversary-of-the-adversary that
+attempts to bypass the current detector) — running offline against captured event
+traces. The output of each cycle is a hardened KB and a re-tuned RAG corpus, signed
+and shipped to deployed agents through the existing signed-feed infrastructure.
+
+This is forward-looking research, not a deployed feature. It is described here so
+prospective design partners understand the architectural direction, not as a
+commitment to ship by a specific date.
 
 ---
 
 ## 🚦 Project Status
 
-> **NEXUS source code is currently in a private pre-release repository.**
-> Public source release is planned **as soon as the project reaches production-ready quality**.
-
-This repository hosts the **public-facing documentation** — architecture, detection coverage,
-and roadmap — for transparency with the security community while the project matures.
+> **Status: alpha / pre-release / pre-customer.**
+> NorthNarrow source code lives in a private repository while the project matures to
+> production quality. This public repo hosts architecture and detection-coverage
+> documentation for transparency with the security community.
 
 ### What you can see today
 
@@ -106,19 +142,23 @@ and roadmap — for transparency with the security community while the project m
 
 ### What is not yet public
 
-- 🔒 Source code (`nexus-core`, `nexus-agent`, `nexus-hive` crates)
+- 🔒 Source code (`northnarrow-core`, `northnarrow-agent`, BPF crates)
 - 🔒 Pre-built binaries
 - 🔒 Detection rule definitions in machine-readable format
 
-### Interested in early access?
+### Interested in design-partner discussion?
 
-If you represent a security team, research lab, or organization with a use case that aligns with NEXUS (air-gapped EDR, sovereign cloud, regulated industry), reach out via the [Contact](#-contact) section below.
+If you represent a security team, research lab, or organization with a use case
+that aligns with NorthNarrow (air-gapped EDR, sovereign cloud, regulated industry),
+reach out via the [Contact](#-contact) section below. The project is in alpha and
+**actively looking for design partners** willing to co-evolve detection coverage
+and deployment patterns against real workloads.
 
 ---
 
 ## 🎯 Detection Coverage
 
-NEXUS ships with **100 curated detection rules** spanning the most common Linux attack patterns observed in 2024–2026 incident response reports. Every rule includes:
+NorthNarrow ships with **100 curated detection rules** spanning the most common Linux attack patterns observed in 2024–2026 incident response reports. Every rule includes:
 
 - ✅ A unique `NEX-*` identifier for tracking and tuning
 - ✅ A MITRE ATT&CK technique mapping (50+ unique techniques covered)
@@ -148,9 +188,9 @@ Rules are not invented — every detection is backed by published research, CVEs
 
 ---
 
-## 🆚 NEXUS vs Existing Solutions
+## 🆚 NorthNarrow vs Existing Solutions
 
-| Capability | Wazuh | Falco | CrowdStrike Falcon | **NEXUS** |
+| Capability | Wazuh | Falco | CrowdStrike Falcon | **NorthNarrow** |
 |-----------|:-----:|:-----:|:-----:|:-----:|
 | Open / source-available | ✅ | ✅ | ❌ | ✅ |
 | Local AI reasoning | ❌ | ❌ | Cloud only | ✅ |
@@ -158,6 +198,7 @@ Rules are not invented — every detection is backed by published research, CVEs
 | Deterministic rules | ✅ (2000+ OSSEC) | ✅ (~50) | ✅ | ✅ (100 curated) |
 | Per-rule MITRE mapping | Partial | Partial | ✅ | ✅ |
 | Cascading verdict (heuristic + AI) | ❌ | ❌ | ❌ | ✅ |
+| eBPF process + file + network | ⚠️ | ✅ (process+net) | ✅ | ✅ |
 | P2P mesh telemetry | ❌ | ❌ | ❌ | 🚧 (planned) |
 | Cost per endpoint per year | Free | Free | $50–200 | TBD |
 | Memory-safe language | C / Python | Go / C++ | C++ | **Rust** |
@@ -168,90 +209,62 @@ Rules are not invented — every detection is backed by published research, CVEs
 
 A transparent log of development progress.
 
-### ✅ Milestone 1 — Foundations
-- Workspace skeleton (`nexus-core`, `nexus-agent`, `nexus-hive`)
-- ECS-compliant event schema (`EcsEvent`, `EventBuilder`)
-- Ed25519 signed envelope (`crypto.rs`) for trustworthy KB updates
-- Initial 5-rule detection set (Windows-only)
-
-### ✅ Milestone 2 — Heuristic Oracle
-- `Oracle` trait abstraction (async, generic verdict format)
-- `HeuristicOracle` implementation: deterministic, sub-millisecond
-- `KnowledgeBase` with versioning and IoC categorization
-- 13 detection rules (3 Windows + 10 Linux core)
-
-### ✅ Milestone 3 — Process Telemetry
-- `ProcessMonitor` via `sysinfo` polling (1 Hz default)
-- ECS conversion (`ProcessInfo` → `EcsEvent`)
-- Live event production tested on Linux + WSL2
-
-### ✅ Milestone 4 — Correlation Engine
-- Per-host sliding windows with bounded memory
-- Lock-free concurrent absorption
-- Idle-host eviction (configurable TTL)
-- 14 unit tests covering eviction, suppression, race conditions
-
-### ✅ Milestone 5 — Adaptive Response Engine
-- 5-level severity ladder: `LOG → ALERT → THROTTLE → KILL → ISOLATE`
-- Dry-run mode for safe staging
-- Audit-grade structured logging via `tracing`
-
-### ✅ Milestone 6 — LocalOracle / Gemma 4 Integration
-- HTTP client to embedded `llama.cpp` server
-- JSON schema-constrained generation (deterministic structure)
-- Verdict normalization (clamp scores, MITRE validation)
-- Live-tested on AMD Ryzen 9 / 32 GB RAM, no GPU
-
-### ✅ Milestone 7 — Cascading Oracle Architecture
-- Two-stage verdict pipeline: heuristic primary + LocalOracle secondary
-- Confidence-weighted score merging (0.6 primary / 0.4 secondary)
-- Graceful fallback if LLM server unreachable
-- Full audit trail of both verdicts in single ECS record
+### ✅ Milestones 1–7 — Foundations
+Workspace skeleton, ECS-compliant event schema, Ed25519 signed envelope for KB
+updates, sysinfo polling telemetry, per-host correlation engine with sliding
+windows, 5-level adaptive response ladder, LocalOracle/Gemma 4 integration via
+`llama.cpp`, cascading-oracle two-stage verdict pipeline. Initial 13-rule
+detection set (3 Windows + 10 Linux core).
 
 ### ✅ Milestone 8 — Detection Coverage Expansion
-- **Detection KB grown 6x: from 13 to 78 rules**
-- 5 strategic families added: CanisterWorm Suite, Initial Access, Persistence, Privilege Escalation, Credential Access, Lateral Movement
-- 50+ unique MITRE ATT&CK techniques covered
-- Real-world threat intel references for every rule (CVEs, APT campaigns, security vendor reports)
-- LocalOracle bug fix: empty-reasoning fallback for benign events
-- Test suite expanded to **96 passing tests** (87 unit + 9 integration)
+Detection KB grown 6× (13 → 78 rules), 5 strategic families added, 50+ unique
+MITRE techniques covered, real-world threat-intel references for every rule.
 
 ### ✅ Milestone 9 — Detection Coverage Hardening
-- 100 detection rules total (Linux + Windows families)
-- 4-tier capability system (Free / Pro / Business / Enterprise)
-- 8 false-positive fixes from real-world audit
-- 87 unit tests + 9 integration tests
+100 detection rules total, 4-tier capability system (Free / Pro / Business /
+Enterprise), 8 false-positive fixes from real-world audit.
 
-### ✅ Milestone 10 — eBPF Kernel Telemetry
-
+### ✅ Milestone 10 — eBPF Process Tracepoint
 - BPF tracepoint on `sched/sched_process_exec` (kernel 5.7+)
-- Process events captured with sub-millisecond latency
-- `aya` 0.13 toolchain (Rust nightly + bpf-linker)
-- **Full ProcessInfo capture (Phase 4.5):** PID, PPID, comm, executable path, timestamp
-  - PPID resolved kernel-side via CO-RE access to `task_struct`
-  - Executable path resolved userspace-side via `/proc/<pid>/exe` (kernel-side path resolution moves to M11 BPF LSM where it is allowed)
-- Runtime detection: BPF when available, sysinfo polling as universal fallback
-- Verified live end-to-end: events flow kernel → BpfProcessMonitor → CorrelationEngine → CascadingOracle, zero events dropped
+- `aya` 0.13 toolchain, full ProcessInfo capture (PID, PPID, comm, exec path)
+- Runtime detection with sysinfo polling fallback when BPF unavailable
+- Verified live end-to-end: kernel → BpfProcessMonitor → CorrelationEngine →
+  CascadingOracle, zero events dropped
 
-### 🟢 Milestone 11 — BPF LSM Enforcement *(5/6 sub-phases done, 83%)*
+### ✅ Milestone 11 — BPF LSM Process Exec Enforcement
+- LSM hook on `bprm_check_security` with kernel-side path resolution via
+  `bpf_d_path` (allowed by the LSM BTF allowlist)
+- Allowlist / denylist BPF policy maps, sub-microsecond lookup
+- Schema v4 with structured `enforcement` field on every event
+- Cascading-oracle fast-path: skip both heuristic and AI on Allowlisted
+  (suppress) and Denied (high-confidence policy violation)
+- 5/6 sub-phases shipped in ALERT mode; **M11.6 BLOCK mode** is deferred to a
+  VM-only session because a bug in BLOCK mode can render a host unbootable
 
-Active execve gating via BPF LSM hooks (`bprm_check_security`, kernel 5.7+).
-The full ALERT mode pipeline is wired and production-tested; BLOCK mode is
-deferred to a VM-only sub-phase due to the safety surface of kernel-level
-exec refusal.
+### ✅ Milestone 12 — Self-Protection
+Watchdog supervisor (systemd `Restart=always` + custom fork-execv pattern with
+async-signal-safe `_exit`), KB SHA-256 verification at boot, executable
+self-hash for tamper-detection telemetry. Kernel-level integrity protections
+groundwork.
 
-- ✅ **M11.1** — LSM hook scaffold + ring-buffered event channel
-- ✅ **M11.2** — Kernel-side executable path resolution via `bpf_d_path`
-- ✅ **M11.3** — Allowlist / denylist BPF policy maps, sub-microsecond lookup
-- ✅ **M11.4** — Agent runtime integration: M10 tracepoint + M11 LSM events share a unified `EcsEvent` channel, correlated by PID
-- ✅ **M11.5** — ALERT mode end-to-end: structured `enforcement` field on every event, `CascadingOracle` fast-path that skips both heuristic and AI evaluation on `Allowlisted` (suppress) and `Denied` (high-confidence policy violation verdict). Saves ~10s per denylist hit by avoiding the AI call. Stress tested at ~143 events/sec sustained, zero event loss.
-- 🔒 **M11.6** — BLOCK mode + safety guards (refuse-to-block list, emergency-disable file, recovery procedure). Deferred to a VM-only session because a bug in BLOCK mode can render a host unbootable.
+### ✅ Milestone 13 — Network Telemetry
+- **M13.1** TCP outbound capture via kprobe on `tcp_v4_connect`
+- **M13.2** PID + remote tuple correlation through the existing CorrelationEngine
+- **M13.3** DNS observability (raw query capture, Shannon entropy on QNAMEs
+  for tunneling detection, per-PID rate limiting via token bucket)
 
-### 🔜 Milestone 12 — Threat Model & Self-Protection *(planned)*
-- Formal `THREAT_MODEL.md` documenting attack vectors and mitigations
-- Watchdog: systemd `Restart=always`, KB SHA256 verification at boot
-- Process integrity self-check
-- Kernel-level protection groundwork
+### 🚧 Milestone 14 — File Integrity Monitoring (in progress)
+- **M14.1** ✅ Design doc + scaffolding (FileEvent / FileEventKind types)
+- **M14.2** ✅ BPF LSM file hooks attached: `file_open`, `inode_unlink`,
+  `inode_rename`, `inode_create`, `inode_setattr`. Path-aware for `file_open`;
+  `inode_*` events emit kind discriminator + PID/UID/comm with `path_len=0`
+  (dentry-based path resolution deferred to M14.4 pre-flight recon)
+- **M14.3** ✅ Userspace consumer + agent integration: unified `BpfLsmSource`
+  drains both `EVENTS` (M11 exec) and `FILE_EVENTS` (M14 FIM) from a single
+  loaded BPF object; events flow as `EcsEvent` with `event.action = file_*`
+- **M14.4** 🚧 Correlation rules (ransomware mass-rename, persistence path
+  tampering, sensitive-file access) + dentry-based path resolution for the
+  four `inode_*` hooks
 
 ---
 
@@ -263,7 +276,7 @@ exec refusal.
 | Async runtime | Tokio | De-facto standard for async Rust |
 | LLM | **Gemma 4 E4B Q8_0** (4B params) | Best tradeoff between local-runnable size and reasoning quality |
 | LLM serving | `llama.cpp` HTTP server | Mature, CPU-friendly, OpenAI-compatible API |
-| Process telemetry | `aya` eBPF (kernel 5.7+) + `sysinfo` fallback | Sub-millisecond capture via BPF, universal fallback when BPF unavailable |
+| Process telemetry | `aya` eBPF (kernel 5.7+) tracepoint + LSM + kprobe; `sysinfo` fallback | Sub-millisecond capture via BPF, universal fallback when BPF unavailable |
 | Crypto | `ring` (Ed25519 signatures, SHA-256) | Audited, BoringSSL-backed. Integrity-first design. |
 | Schema | Elastic Common Schema 8.11 | Industry-standard interoperability |
 | Logging | `tracing` (structured) | Production-grade observability |
@@ -273,15 +286,14 @@ exec refusal.
 
 ## 📋 Current Status
 
-🟢 **Pre-release v0.3 — Milestone 11 almost complete (5/6 sub-phases done)**
+🟠 **Alpha — pre-release, pre-customer. M14 (FIM) in progress.**
 
 | Metric | Value |
 |--------|-------|
 | Detection rules | **100** |
 | MITRE techniques covered | **50+** |
-| Test coverage | **100 tests passing** (91 unit + 9 integration) |
-| Codebase size | ~10,140 lines of Rust |
-| Supported OS | Linux (Ubuntu 22.04+, WSL2 verified). Windows planned future release |
+| Test coverage | **163 tests passing** (unit + integration) |
+| Supported OS | Linux (Ubuntu 24.04 LTS target, 22.04 supported, WSL2 dev). Windows planned future release |
 | Detection latency (heuristic) | < 1 ms |
 | Detection latency (LocalOracle, CPU) | 7–15 s on Ryzen 9 3900XT |
 | Memory footprint (agent) | ~30 MB without LLM |
@@ -291,9 +303,16 @@ exec refusal.
 
 ## 📬 Contact
 
-For early-access evaluation, threat intelligence collaboration, or commercial licensing inquiries:
+NorthNarrow is in alpha and looking for **design partners** — security teams or
+organizations willing to co-evolve detection coverage and deployment patterns
+against real workloads.
 
-- 🔗 **GitHub**: [@nexus-aiedr](https://github.com/nexus-aiedr)
+For early-access evaluation, threat intelligence collaboration, or commercial
+licensing inquiries:
+
+- 🔗 **GitHub**: [@northnarrow](https://github.com/northnarrow) — open an issue
+  in this repository for public discussion, or use Discussions for design-partner
+  inquiries
 - 💼 **LinkedIn**: *coming soon*
 - 📧 **Email**: *coming soon*
 
@@ -305,13 +324,18 @@ For early-access evaluation, threat intelligence collaboration, or commercial li
 
 **Proprietary. All rights reserved.**
 
-NEXUS will transition to a dual-license model (AGPLv3 + commercial) upon public release. Until then, all source code is provided for evaluation only and may not be redistributed.
+NorthNarrow will transition to a dual-license model (AGPLv3 + commercial) upon
+public release. Until then, all source code is provided for evaluation only and
+may not be redistributed.
 
 ---
 
 ## ⚠️ Disclaimer
 
-NEXUS is **pre-release software** under active development. Detection rules are validated against published threat intelligence, but no detection system can guarantee 100% coverage of unknown threats. Use in production environments at your own risk and always pair with defense-in-depth practices.
+NorthNarrow is **alpha software** under active development. Detection rules are
+validated against published threat intelligence, but no detection system can
+guarantee 100% coverage of unknown threats. Use in production environments at
+your own risk and always pair with defense-in-depth practices.
 
 ---
 

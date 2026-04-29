@@ -1,7 +1,77 @@
 # Changelog
 
-All notable changes to NEXUS AIEDR are documented here.
+All notable changes to NorthNarrow are documented here.
 Format inspired by [Keep a Changelog](https://keepachangelog.com).
+
+## [v0.4.0] — Milestones 10–14.3: eBPF telemetry stack + brand transition
+**Released**: 2026-04-29
+
+### Added — kernel-side telemetry (Milestones 10–14.3)
+- **M10 — eBPF process tracepoint**: BPF tracepoint on
+  `sched/sched_process_exec` (kernel 5.7+) replacing the M3 sysinfo polling
+  fallback as the primary process telemetry source. Full `ProcessInfo` capture
+  (PID, PPID, comm, executable path) with sub-millisecond latency. Universal
+  sysinfo fallback retained for hosts without BPF.
+- **M11 — BPF LSM process exec enforcement** (5/6 sub-phases shipped, ALERT
+  mode complete):
+  - LSM hook on `bprm_check_security` with kernel-side path resolution via
+    `bpf_d_path` (LSM BTF allowlist).
+  - Allowlist / denylist BPF policy maps, sub-microsecond lookup.
+  - Schema v4 with structured `enforcement` field on every event.
+  - Cascading-oracle fast-path: skip both heuristic and AI evaluation on
+    Allowlisted (suppress) and Denied (high-confidence verdict).
+  - M11.6 BLOCK mode deferred to a VM-only session (a bug in BLOCK mode can
+    render a host unbootable).
+- **M12 — Self-protection**: watchdog supervisor (systemd `Restart=always` +
+  custom fork-execv pattern with async-signal-safe `_exit`), KB SHA-256
+  verification at boot, executable self-hash for tamper-detection telemetry.
+- **M13 — Network telemetry**: TCP outbound capture via kprobe on
+  `tcp_v4_connect` (M13.1), PID + remote tuple correlation through the
+  CorrelationEngine (M13.2), DNS observability with raw query capture, Shannon
+  entropy on QNAMEs for tunneling detection, and per-PID rate limiting via
+  token bucket (M13.3).
+- **M14 — File Integrity Monitoring** (in progress):
+  - M14.1 ✅ Design doc + scaffolding (`FileEvent`, `FileEventKind` types).
+  - M14.2 ✅ Five BPF LSM file hooks attached: `file_open`, `inode_unlink`,
+    `inode_rename`, `inode_create`, `inode_setattr`. Path-aware `file_open`;
+    `inode_*` events emit kind discriminator + PID/UID/comm with `path_len=0`.
+  - M14.3 ✅ Userspace consumer + agent integration: unified `BpfLsmSource`
+    drains both `EVENTS` (M11 exec) and `FILE_EVENTS` (M14 FIM) from a single
+    loaded BPF object; events flow as `EcsEvent` with the new `event.action`
+    ECS field set to `file_open` / `file_unlink` / `file_rename` /
+    `file_create` / `file_setattr`.
+  - M14.4 🚧 Correlation rules + dentry-based path resolution for the four
+    `inode_*` hooks (in progress).
+
+### Added — schema
+- `EcsEvent.event_action: Option<String>` mapped to ECS `event.action`. A
+  free-form fine-grained operation label (e.g. `file_open`, `process_exec`,
+  `network_connect`), distinct from the coarse `event_type` enum.
+
+### Changed — branding
+- Project renamed **NEXUS AIEDR → NorthNarrow** across all public-facing
+  documentation. GitHub repository moved from
+  `github.com/nexus-aiedr/nexus-aiedr` to `github.com/northnarrow/northnarrow`
+  (public docs) and from `github.com/nexus-aiedr/nexus-core` to
+  `github.com/northnarrow/northnarrow-private` (source). GitHub auto-redirects
+  from old URLs for a limited time.
+- Status label switched from "pre-release" to **"alpha / pre-customer"** to
+  more accurately reflect the project stage.
+
+### Removed
+- `nexus-hive` placeholder crate (was 100% empty: 2-line `lib.rs` with a
+  single const, 5 unused dependencies, never imported). The P2P-mesh concept
+  remains on the long-term roadmap; it will be designed with concrete
+  requirements when a deployment partner needs it, not pre-allocated as an
+  empty crate.
+- Userspace `aya-log` dependency from `northnarrow-bpf-lsm` and
+  `northnarrow-bpf-net`. Kernel-side `aya-log-ebpf` retained.
+- Orphan `BpfLsmEnforcement::new` constructor (post-audit dead code).
+
+### Test coverage
+- 163 tests passing (up from 100 in v0.3.0).
+
+---
 
 ## [v0.3.0] — Milestone 9: Tier-Aware Knowledge Base
 **Released**: April 2026
@@ -104,7 +174,7 @@ applied during M9 development):
 - Detection capability on intended attacks: preserved
 - False positive scenarios eliminated: 12+
 
-Internal commit reference: `6638571` (private nexus-core repo).
+Internal commit reference: `6638571` (private northnarrow-private repo).
 
 This is a quality-improvement pass, not a coverage change. Future
 similar passes will be done as new false-positive patterns are
@@ -138,7 +208,7 @@ identified during real-world testing.
 **Released**: 2025–2026
 
 ### Architecture
-- Workspace skeleton: `nexus-core`, `nexus-agent`, `nexus-hive` crates
+- Workspace skeleton: `northnarrow-private`, `northnarrow-agent` crates
 - ECS-compliant event schema (Elastic Common Schema 8.11)
 - Ed25519 signed envelope for KB updates (`crypto.rs`)
 - Process telemetry via `sysinfo` polling at 10 Hz
@@ -153,12 +223,14 @@ identified during real-world testing.
 
 ---
 
-## Roadmap
+## Roadmap (forward-looking)
 
 | Milestone | Focus | Status |
 |-----------|-------|--------|
-| M10 | eBPF kernel telemetry (replace sysinfo polling) | 🚧 Planning |
-| M11 | nexus-hive P2P mesh (Ed25519 IoC propagation) | 🔜 Planned |
-| M12 | License enforcement (Ed25519 key file) | 🔜 Planned |
-| M13 | Windows-native agent (ETW consumer) | 🔜 Planned |
-| M14 | Management UI (Leptos / Yew) | 🔜 Planned |
+| M14.4    | FIM correlation rules + dentry-based path resolution for `inode_*` LSM hooks | 🚧 In progress |
+| M-AI-x   | RAG-LEGIT (benign baselines) + RAG-NOLEGIT (malicious patterns) retrieval-augmented inference | 🔜 Design |
+| M-AI-y   | Adversarial multi-agent training loop (5+ agents, red/blue) for verdict robustness | 🔜 Research |
+| Future   | Windows-native agent (ETW consumer) | 🔜 Planned |
+| Future   | Management UI (Leptos / Yew) | 🔜 Planned |
+| Future   | P2P mesh for multi-host IoC propagation (mDNS + Ed25519-signed beacons) | 🔜 Planned, no crate allocated yet |
+| Future   | License enforcement (Ed25519 key file) | 🔜 Planned |

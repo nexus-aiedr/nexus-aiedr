@@ -1,25 +1,25 @@
-NEXUS AIEDR — Proprietary License
-Copyright (c) 2026 NEXUS AIEDR Project
+NorthNarrow — Proprietary License
+Copyright (c) 2026 NorthNarrow Project
 
 All rights reserved.
 
-This repository contains the public-facing documentation of NEXUS AIEDR.
+This repository contains the public-facing documentation of NorthNarrow.
 The source code of the project is currently kept in a private repository
 and is not licensed for public use, redistribution, or modification.
 
 UNTIL OFFICIAL PUBLIC RELEASE:
 - All documentation, diagrams, and architectural descriptions herein
   are provided for informational purposes only.
-- No license is granted to use any part of NEXUS AIEDR (in source or
+- No license is granted to use any part of NorthNarrow (in source or
   binary form) for any purpose without explicit written permission
   from the project maintainers.
 
 POST PUBLIC RELEASE (planned):
-NEXUS AIEDR will transition to a dual-license model:
+NorthNarrow will transition to a dual-license model:
   - AGPLv3 for community/open-source use
   - Commercial license (Pro / Business / Enterprise tiers)
 
 Until that transition, please contact the project maintainers for any
 inquiry regarding evaluation, integration, or commercial use.
 
-For questions: https://github.com/nexus-aiedr
+For questions: https://github.com/northnarrow

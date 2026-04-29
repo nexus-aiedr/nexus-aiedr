@@ -2,8 +2,8 @@
 
 ## Reporting a Vulnerability
 
-NEXUS AIEDR takes security seriously. If you believe you have found a
-security vulnerability in any NEXUS component (architecture, detection
+NorthNarrow takes security seriously. If you believe you have found a
+security vulnerability in any NorthNarrow component (architecture, detection
 logic, or future released code), please follow responsible disclosure.
 
 ## How to Report

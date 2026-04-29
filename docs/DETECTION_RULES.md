@@ -1,6 +1,6 @@
-# NEXUS AIEDR — Detection Rules Catalog
+# NorthNarrow — Detection Rules Catalog
 
-Complete list of the 100 detection rules currently in NEXUS v0.3.0.
+Complete list of the 100 detection rules currently in NorthNarrow v0.3.0.
 Each rule is mapped to MITRE ATT&CK and classified by commercial tier.
 
 **Note**: rule IDs and names are public. The actual matching conditions
@@ -178,7 +178,7 @@ References: JFrog, Socket, Aikido security advisories
 
 ## MITRE ATT&CK Coverage
 
-NEXUS v0.3.0 covers **60+ unique MITRE ATT&CK techniques** across the
+NorthNarrow v0.3.0 covers **60+ unique MITRE ATT&CK techniques** across the
 following tactics:
 
 - **TA0001** Initial Access (15 rules)

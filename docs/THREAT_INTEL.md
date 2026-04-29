@@ -1,6 +1,6 @@
-# NEXUS AIEDR — Threat Intelligence References
+# NorthNarrow — Threat Intelligence References
 
-NEXUS detection rules are **not invented in isolation**. Every rule is
+NorthNarrow detection rules are **not invented in isolation**. Every rule is
 grounded in published research, documented attacks, or vulnerability
 disclosures. This document tracks the sources.
 
@@ -8,7 +8,7 @@ disclosures. This document tracks the sources.
 
 ## CVE References (rules backed by specific vulnerabilities)
 
-| CVE | Vulnerability | Year | NEXUS Rule(s) |
+| CVE | Vulnerability | Year | NorthNarrow Rule(s) |
 |-----|---------------|-----:|---------------|
 | CVE-2021-4034 | PwnKit — polkit pkexec local privesc | 2021 | NEX-L-PR-005 |
 | CVE-2022-0847 | DirtyPipe — Linux kernel pipe write | 2022 | NEX-L-PR-008 |
@@ -27,54 +27,54 @@ disclosures. This document tracks the sources.
 - **Vector**: npm supply chain
 - **C2 channel**: ICP (Internet Computer) canisters
 - **Self-propagation**: automated `npm publish` from infected hosts
-- **NEXUS coverage**: NEX-L-0011 through NEX-L-0015 (5 rules)
+- **NorthNarrow coverage**: NEX-L-0011 through NEX-L-0015 (5 rules)
 - **References**: JFrog, Socket, Aikido security advisories
 
 ### Outlaw / Kinsing (ongoing)
 - **Vector**: Linux server cryptomining campaigns
 - **Target**: Redis, Hadoop, Docker exposed instances
-- **NEXUS coverage**: NEX-L-0004 (cryptominer detection)
+- **NorthNarrow coverage**: NEX-L-0004 (cryptominer detection)
 
 ### TeamTNT (ongoing)
 - **Vector**: Cloud-native attacks (AWS, Docker, Kubernetes)
 - **Tactics**: IMDS credential theft, container escape
-- **NEXUS coverage**: NEX-L-BIZ-001 through NEX-L-BIZ-006
+- **NorthNarrow coverage**: NEX-L-BIZ-001 through NEX-L-BIZ-006
 
 ### RotaJakiro (2021–ongoing)
 - **Vector**: Linux backdoor with kernel-thread masquerading
-- **NEXUS coverage**: NEX-L-PRO-003 (kernel thread name fakes)
+- **NorthNarrow coverage**: NEX-L-PRO-003 (kernel thread name fakes)
 
 ### XorDDoS (long-running)
 - **Vector**: Linux DDoS botnet with rootkit features
-- **NEXUS coverage**: NEX-L-ENT-002 (bind-mount rootkit)
+- **NorthNarrow coverage**: NEX-L-ENT-002 (bind-mount rootkit)
 
 ### Symbiote (2022)
 - **Vector**: Linux stealth malware via LD_PRELOAD + bind mounts
-- **NEXUS coverage**: NEX-L-PE-010, NEX-L-ENT-002
+- **NorthNarrow coverage**: NEX-L-PE-010, NEX-L-ENT-002
 
 ### APT29 / Cozy Bear (Russia, ongoing)
 - **Tactics**: Supply chain, cloud, custom backdoors
-- **NEXUS coverage**: NEX-L-ENT-001 (timestomping anti-forensics)
+- **NorthNarrow coverage**: NEX-L-ENT-001 (timestomping anti-forensics)
 
 ### Turla (Russia, long-running)
 - **Linux variant tactics**: SSH backdoors, kernel modules
-- **NEXUS coverage**: NEX-L-PRO-001 (backdoored OpenSSH)
+- **NorthNarrow coverage**: NEX-L-PRO-001 (backdoored OpenSSH)
 
 ### APT41 / Double Dragon (China, ongoing)
 - **Cross-platform**: Windows + Linux
 - **Tactics**: Process injection, ptrace abuse
-- **NEXUS coverage**: NEX-L-ENT-003 (ptrace injection)
+- **NorthNarrow coverage**: NEX-L-ENT-003 (ptrace injection)
 
 ### Lazarus Group (DPRK, ongoing)
 - **Linux variants**: financial, supply chain
-- **NEXUS coverage**: NEX-L-ENT-003, NEX-L-PRO-004 (memfd_create)
+- **NorthNarrow coverage**: NEX-L-ENT-003, NEX-L-PRO-004 (memfd_create)
 
 ---
 
 ## Knowledge Frameworks Used
 
 ### MITRE ATT&CK Enterprise Matrix v15
-Primary framework for technique mapping. Every NEXUS rule has a
+Primary framework for technique mapping. Every NorthNarrow rule has a
 `mitre_technique` field populated with the corresponding T-number
 (e.g., T1059.004 for Unix Shell execution).
 
@@ -107,7 +107,7 @@ Used for response action mapping (the 5-level adaptive ladder).
 ## Public Security Research Cited
 
 The following organizations and researchers have published work that
-informs NEXUS rules. Crediting them is the right thing to do.
+informs NorthNarrow rules. Crediting them is the right thing to do.
 
 - **JFrog Security Research** — supply chain attack disclosures
 - **Socket** — npm ecosystem security
@@ -124,9 +124,9 @@ informs NEXUS rules. Crediting them is the right thing to do.
 
 ---
 
-## How NEXUS Adds Value
+## How NorthNarrow Adds Value
 
-NEXUS does **not** invent new threat intelligence. The work is in:
+NorthNarrow does **not** invent new threat intelligence. The work is in:
 
 1. **Curating** — selecting which patterns are worth turning into rules
 2. **Translating** — converting research findings into precise
@@ -138,7 +138,7 @@ NEXUS does **not** invent new threat intelligence. The work is in:
 5. **Integrating** — wiring rules into the Cascading Oracle so AI can
    handle the ambiguous cases
 
-The detection rules are NEXUS's distinctive contribution. The
+The detection rules are NorthNarrow's distinctive contribution. The
 underlying threat research is shared with the global security community.
 
 ---

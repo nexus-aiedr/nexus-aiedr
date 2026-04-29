@@ -1,13 +1,13 @@
-# NEXUS AIEDR — Tier System & Commercial Model
+# NorthNarrow — Tier System & Commercial Model
 
-This document explains how NEXUS implements commercial tiers and
+This document explains how NorthNarrow implements commercial tiers and
 why the model was chosen.
 
 ---
 
 ## The Single-Binary, Feature-Flagged Model
 
-NEXUS follows the **single-binary commercial tier model** pioneered
+NorthNarrow follows the **single-binary commercial tier model** pioneered
 by GitLab and adopted by Elastic, JetBrains (sort of), Tailscale, and
 many modern open-core companies.
 
@@ -48,7 +48,7 @@ logic itself**, which is concentrated in one well-tested module.
 
 **Does NOT include**:
 - LocalOracle / AI reasoning
-- nexus-hive P2P mesh
+- Multi-host P2P mesh (planned future capability)
 - Compliance reports
 - Commercial support
 
@@ -80,10 +80,10 @@ logic itself**, which is concentrated in one well-tested module.
 
 **Includes** (everything in Pro, plus):
 - 16 additional rules (91 total)
-- nexus-hive P2P mesh (multi-host coordination)
+- Multi-host P2P mesh (future capability, no crate allocated yet)
 - Compliance reports (ISO 27001, NIS2, GDPR)
 - SIEM integration (syslog/CEF to Elastic, Splunk, etc.)
-- Threat intel feed (signed by NEXUS team)
+- Threat intel feed (signed by NorthNarrow team)
 - Phone support (24h response)
 
 **License model (planned)**: Commercial (annual)
@@ -126,7 +126,7 @@ enum implements an `includes()` check:
 
 ## Pricing Philosophy
 
-NEXUS pricing is intentionally lower than US-centric competitors:
+NorthNarrow pricing is intentionally lower than US-centric competitors:
 
 | Solution | Indicative price (per host/year) |
 |----------|----------------------------------|
@@ -134,9 +134,9 @@ NEXUS pricing is intentionally lower than US-centric competitors:
 | SentinelOne | $50–$150 |
 | Microsoft Defender for Endpoint | $30–$60 (with Microsoft 365) |
 | Wazuh | Free (community) / commercial support varies |
-| **NEXUS Pro** | €49 |
-| **NEXUS Business** | €149 |
-| **NEXUS Enterprise** | from €399 |
+| **NorthNarrow Pro** | €49 |
+| **NorthNarrow Business** | €149 |
+| **NorthNarrow Enterprise** | from €399 |
 
 The reasoning:
 
