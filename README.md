@@ -8,7 +8,7 @@
 [![Rust](https://img.shields.io/badge/rust-1.95+-93450a)]()
 [![License](https://img.shields.io/badge/license-Proprietary-red)]()
 [![Detection Rules](https://img.shields.io/badge/detection_rules-100-blue)]()
-[![Tests](https://img.shields.io/badge/tests-163_passing-green)]()
+[![Tests](https://img.shields.io/badge/tests-171_passing-green)]()
 [![MITRE Coverage](https://img.shields.io/badge/MITRE_ATT%26CK-50%2B_techniques-purple)]()
 
 *Heuristic precision meets local LLM reasoning — zero cloud dependencies, full data sovereignty.*
@@ -109,6 +109,45 @@ tuning explainable in terms of *which* corpus the event matched against.
 The roadmap covering this layer is tracked as `M-AI-*` milestones (RAG infrastructure,
 embedding store integration, retrieval prompt design, dual-stream fusion).
 
+### Mid-term: decentralized threat-intelligence mesh
+
+For cross-organization signature propagation — the dimension where centralized
+vendors (CrowdStrike, SentinelOne, Microsoft Defender) own the moat today —
+NorthNarrow's architectural endgame is a **decentralized mesh of authenticated
+nodes** that share detection signatures via Byzantine Fault Tolerant consensus,
+eliminating the single-vendor failure mode characteristic of the cloud-EDR
+incumbents (cf. the CrowdStrike Falcon Sensor outage of 19 July 2024).
+
+The architecture rests on five pillars: (1) **Sybil resistance via licensed
+identity** (three-tier KYC: use-only / mesh-consumer / council-member, pricing
+forged identities above what state-level attackers find economic);
+(2) **Proof of Authority consensus** (7-node council per regional federation
+with BFT 5-of-7 ratification, sub-second rounds via mature Tendermint-derived
+primitives); (3) **Liability management** (EULA + cyber liability insurance +
+NIS2/DORA alignment, designed-from-scratch to meet EU regulatory frontiers);
+(4) **Sanitization at source + regional data residency** (EU/US/Asia clusters
+with no default cross-jurisdiction telemetry flow; Schrems II compliance by
+architecture); (5) **Shadow mode + circuit breaker** (4-stage rollout —
+canary 5% → staged 50% → active 100% — with automatic rollback at 0.5% error
+rate; Time-to-Alert 1-5 minutes, Time-to-Block 1-7 days).
+
+Three-phase deployment: **2027** single-node + threat-intel pull (current
+trajectory); **2028-2029** NorthNarrow-operated council bootstrap (transparent
+centralized trust with auditable signing keys); **2030+** customer-governed
+regional federations (EU banking, EU government, US critical infrastructure,
+healthcare, journalism) with NorthNarrow Inc. as a peer rather than the root
+authority. The successor-authority commitment — escrowed key material, defined
+succession protocol — ensures customer endpoints remain operational independent
+of NorthNarrow's corporate continuity. Vendor failure is a recoverable event,
+not a systemic one.
+
+The full internal architecture document (5 pillars elaborated, 3-phase rollout
+detail, 6 open problems explicitly enumerated, EUR 80K-180K annual operational
+baseline for compliance + insurance + legal) is **available to design partners
+under NDA**. Reach out via the [Contact](#-contact) section if your
+organization's threat model has "the EDR vendor controls our threat
+intelligence" as a non-starter.
+
 ### Long-term: adversarial multi-agent training
 
 The end-state vision is a **multi-agent training loop** — at least five specialized
@@ -160,7 +199,7 @@ and deployment patterns against real workloads.
 
 NorthNarrow ships with **100 curated detection rules** spanning the most common Linux attack patterns observed in 2024–2026 incident response reports. Every rule includes:
 
-- ✅ A unique `NEX-*` identifier for tracking and tuning
+- ✅ A unique `NN-L-*` identifier for tracking and tuning
 - ✅ A MITRE ATT&CK technique mapping (50+ unique techniques covered)
 - ✅ A maturity tag (`stable` / `beta`) reflecting field validation
 - ✅ An author tag for accountability
@@ -199,7 +238,7 @@ Rules are not invented — every detection is backed by published research, CVEs
 | Per-rule MITRE mapping | Partial | Partial | ✅ | ✅ |
 | Cascading verdict (heuristic + AI) | ❌ | ❌ | ❌ | ✅ |
 | eBPF process + file + network | ⚠️ | ✅ (process+net) | ✅ | ✅ |
-| P2P mesh telemetry | ❌ | ❌ | ❌ | 🚧 (planned) |
+| Decentralized mesh consensus | ❌ | ❌ | ❌ | 📐 (designed) |
 | Cost per endpoint per year | Free | Free | $50–200 | TBD |
 | Memory-safe language | C / Python | Go / C++ | C++ | **Rust** |
 
@@ -253,18 +292,77 @@ groundwork.
 - **M13.3** DNS observability (raw query capture, Shannon entropy on QNAMEs
   for tunneling detection, per-PID rate limiting via token bucket)
 
-### 🚧 Milestone 14 — File Integrity Monitoring (in progress)
-- **M14.1** ✅ Design doc + scaffolding (FileEvent / FileEventKind types)
+### ✅ Milestone 14 — File Integrity Monitoring
+*(Code complete; runtime verifier acceptance pending VM-day session.)*
+
+- **M14.1** ✅ Design doc + scaffolding (FileEvent / FileEventKind types,
+  ringbuf reservation, agent integration plan)
 - **M14.2** ✅ BPF LSM file hooks attached: `file_open`, `inode_unlink`,
   `inode_rename`, `inode_create`, `inode_setattr`. Path-aware for `file_open`;
-  `inode_*` events emit kind discriminator + PID/UID/comm with `path_len=0`
-  (dentry-based path resolution deferred to M14.4 pre-flight recon)
+  `inode_*` hooks initially emit kind discriminator + PID/UID/comm with
+  `path_len=0` (dentry-based path resolution arrives in M14.4)
 - **M14.3** ✅ Userspace consumer + agent integration: unified `BpfLsmSource`
   drains both `EVENTS` (M11 exec) and `FILE_EVENTS` (M14 FIM) from a single
   loaded BPF object; events flow as `EcsEvent` with `event.action = file_*`
-- **M14.4** 🚧 Correlation rules (ransomware mass-rename, persistence path
-  tampering, sensitive-file access) + dentry-based path resolution for the
-  four `inode_*` hooks
+- **M14.4** ✅ Dentry-based path resolution for all four `inode_*` hooks
+  (`inode_unlink`, `inode_create`, `inode_setattr`, `inode_rename`) plus
+  9-rule FIM correlation family in the `KnowledgeBase` (`NN-L-FIM-*`):
+  ransomware mass-rename detection, persistence path tampering
+  (`/etc/cron.*`, `/etc/systemd/system/*`, `~/.ssh/authorized_keys`,
+  `/etc/sudoers.d/*`), sensitive-file access (`/etc/shadow`, browser
+  credential stores, SSH private keys). Code complete; verifier
+  acceptance for `bpf_d_path` on the four `inode_*` hook contexts and
+  the 9-rule adversarial runtime exercise pending VM-day.
+
+### ✅ Milestone 14.5 — Persistent Node Identity
+
+Replaces transient agent identity (host UUID and Ed25519 keypair both
+regenerated every boot, breaking audit-trail continuity) with persistent
+identity stored in a state directory. UUID `host.id` resolves from
+`/etc/machine-id` if available, falling back to a persisted UUID v4. The
+Ed25519 keypair is stored as a raw 32-byte secret seed in `identity.key`
+with mode 0600 and atomic write (`.tmp` + rename); deletion forces
+regeneration with explicit operator intent (`rm`) rather than silent
+every-boot drift.
+
+State directory resolution follows a 4-step fallback (systemd
+`$STATE_DIRECTORY` → `/var/lib/northnarrow` if root → XDG state home →
+hard-fail with structured error). The systemd unit was bumped with
+`StateDirectory=northnarrow` so production deployments inherit the
+directory creation, ownership, and access rights from the unit
+declaration. Unblocks license-tier persistence and signed-rule
+infrastructure for future milestones.
+
+### 📐 Milestone 15 — External Threat Intelligence Ingestion (designed)
+
+Design committed; implementation queued post-VM-day. The complete design
+spec covers 8 sub-milestones (M15.0 through M15.7, ~9-11 sessions
+estimated, ~3200 LOC):
+
+- **M15.0** Configuration loader (TOML + serde, with the same fallback
+  pattern as the M14.5 state directory). Prerequisite for tunable feed
+  URLs, refresh cadences, and operator-driven IoC source selection.
+- **M15.1** New `northnarrow-threatintel` crate scaffolding + IoC types
+  (file hashes, URLs, domains, IPs).
+- **M15.2** Storage layer on **redb 3.x** — pure-Rust, single-file,
+  transactional. Chosen over SQLite (libc dependencies) and sled
+  (maintenance status). Anticipated 100k-1M IoC entries.
+- **M15.3** First source adapter: **abuse.ch URLhaus** (malicious URL
+  feed, ~1k entries refreshed every 5 minutes). OTX/MISP deferred to
+  M15.8/M15.9 or M17 to keep M15 bounded.
+- **M15.4** Polling scheduler with exponential backoff, jitter, and
+  circuit-breaker for endpoint outages.
+- **M15.5** Lookup API + IoC enricher — pre-correlation pipeline stage
+  that adds `event.threat.indicators` to passing events. Zero rewrite
+  of existing detection rules; the enrichment is purely additive.
+- **M15.6** Five new `NN-L-IOC-001..005` detection rules to consume the
+  enrichment output.
+- **M15.7** Metrics + hardening + operator documentation (refresh
+  state, last-fetch timestamps, error rates, redb compaction).
+
+File hashing for the FIM events (matching the IoC store against actual
+on-disk binaries) is intentionally deferred to M16 — keeps M15 scoped
+to network-side intel.
 
 ---
 
@@ -286,13 +384,13 @@ groundwork.
 
 ## 📋 Current Status
 
-🟠 **Alpha — pre-release, pre-customer. M14 (FIM) in progress.**
+🟠 **Alpha — pre-release, pre-customer. M14 closed (modulo VM-day verification), M15 in design, M-AI track queued.**
 
 | Metric | Value |
 |--------|-------|
 | Detection rules | **100** |
 | MITRE techniques covered | **50+** |
-| Test coverage | **163 tests passing** (unit + integration) |
+| Test coverage | **171 tests passing** (unit + integration) |
 | Supported OS | Linux (Ubuntu 24.04 LTS target, 22.04 supported, WSL2 dev). Windows planned future release |
 | Detection latency (heuristic) | < 1 ms |
 | Detection latency (LocalOracle, CPU) | 7–15 s on Ryzen 9 3900XT |
